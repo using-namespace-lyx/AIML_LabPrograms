@@ -1,25 +1,24 @@
 import numpy as np
 from queue import PriorityQueue
 
-class State:
-    def __init__(self, state, parent):
-        self.state = state
-        self.parent = parent
+class PuzzleState:
+    def __init__(self, current_value, parent_state):
+        self.current_value = current_value
+        self.parent_state = parent_state
 
     def __lt__(self, other):
         return False  # Define a default comparison method
 
 class Puzzle:
-    def __init__(self, initial_state, goal_state):
-        self.initial_state = initial_state
-        self.goal_state = goal_state
-
+    def __init__(self, start, goal):
+        self.start = start
+        self.goal = goal
 
     def print_state(self, state):
         print(state[:, :])
 
     def is_goal(self, state):
-        return np.array_equal(state, self.goal_state)
+        return np.array_equal(state, self.goal)
 
     def get_possible_moves(self, state):
         possible_moves = []
@@ -34,39 +33,38 @@ class Puzzle:
         return possible_moves
 
     def heuristic(self, state):
-         return np.count_nonzero(state != self.goal_state)
-
+         return np.count_nonzero(state != self.goal)
 
     def solve(self):
         queue = PriorityQueue()
-        initial_state = State(self.initial_state, None)
-        queue.put((0, initial_state))  # Put State object in queue
+        start_state = PuzzleState(self.start, None)
+        queue.put((0, start_state))  # Put State object in queue
         visited = set()
 
         while not queue.empty():
             priority, current_state = queue.get()
-            if self.is_goal(current_state.state):
+            if self.is_goal(current_state.current_value):
                 return current_state  # Return final state
-            for move in self.get_possible_moves(current_state.state):
-                move_state = State(move, current_state)  # Create new State for move
-                if str(move_state.state) not in visited:
-                    visited.add(str(move_state.state))
-                    priority = self.heuristic(move_state.state)
+            for move in self.get_possible_moves(current_state.current_value):
+                move_state = PuzzleState(move, current_state)  # Create new State for move
+                if str(move_state.current_value) not in visited:
+                    visited.add(str(move_state.current_value))
+                    priority = self.heuristic(move_state.current_value)
                     queue.put((priority, move_state))  # Put State object in queue
         return None
 
 # Test the function
 print("Start matrix:")
-initial_state = np.array([[int(x) for x in input().split()] for _ in range(3)])
+start_state = np.array([[int(x) for x in input().split()] for _ in range(3)])
 print("Goal matrix:")
 goal_state = np.array([[int(x) for x in input().split()] for _ in range(3)])
-puzzle = Puzzle(initial_state, goal_state)
+puzzle = Puzzle(start_state, goal_state)
 solution = puzzle.solve()
 if solution is not None:
     moves = []
     while solution is not None:  # Go through parents to get moves
-        moves.append(solution.state)
-        solution = solution.parent
+        moves.append(solution.current_value)
+        solution = solution.parent_state
     for move in reversed(moves):  # Print moves in correct order
         puzzle.print_state(move)
 else:
