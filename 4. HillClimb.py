@@ -1,70 +1,50 @@
-import random
+import numpy as np
 
+def hill_climbing(func, start, step_size=0.01, max_iterations=1000):
+    current_position = start
+    current_value = func(current_position)
+    
+    for i in range(max_iterations):
+        next_position_positive = current_position + step_size
+        next_value_positive = func(next_position_positive)
+        
+        next_position_negative = current_position - step_size
+        next_value_negative = func(next_position_negative)
+        
+        if next_value_positive > current_value and next_value_positive >= next_value_negative:
+            current_position = next_position_positive
+            current_value = next_value_positive
+        elif next_value_negative > current_value and next_value_negative > next_value_positive:
+            current_position = next_position_negative
+            current_value = next_value_negative
+        else:
+            break
+    
+    return current_position, current_value
 
-def choose_initial_solution():
-    print("Choose random initial solution or take input from user?")
-    print("1. Random")
-    print("2. User Input")
-    choice = int(input("Enter your choice: "))
-    if choice == 1:
-        return random.uniform(-10, 10)  # Random initial solution between -10 and 10
-    elif choice == 2:
-        return float(input("Enter initial solution: "))
-    else:
-        print("Invalid choice, try again!")
-        return choose_initial_solution()
-
-
-def evaluate_objective_function(solution):
-    return solution**2  # Maximizing a quadratic function
-
-
-def generate_neighbors(solution):
-    return [solution + random.uniform(-1, 1) for _ in range(5)]
-
-
-def select_best_neighbor(neighbors):
-    return max(neighbors, key=evaluate_objective_function)
-
-
-# Termination Criteria
-max_iterations = 100  # Total number of iterations
-no_improvement_threshold = 10  # Number of iterations with no improvement
-objective_threshold = -90  # Stop if the objective function value reaches this threshold
-
-initial_solution = choose_initial_solution()
-current_solution = initial_solution
-current_value = evaluate_objective_function(current_solution)
-
-no_improvement_count = 0
-
-for _ in range(max_iterations):
-    neighbors = generate_neighbors(current_solution)
-
-    best_neighbor = select_best_neighbor(neighbors)
-    best_value = evaluate_objective_function(best_neighbor)
-
-    # Check if the best neighbor improves the current solution
-    if best_value > current_value:
-        current_solution = best_neighbor
-        current_value = best_value
-        no_improvement_count = 0
-    else:
-        no_improvement_count += 1
-
-    # Termination checks
-    if no_improvement_count >= no_improvement_threshold:
-        print(
-            "Terminating due to no improvement for",
-            no_improvement_threshold,
-            "iterations.",
-        )
+# Get the function from the user
+while True:
+    func_str = input("\nEnter a function of x: ")
+    try:
+        # Test the function with a dummy value
+        x = 0
+        eval(func_str)
         break
+    except Exception as e:
+        print(f"Invalid function. Please try again. Error: {e}")
 
-    if current_value >= objective_threshold:
-        print("Terminating due to reaching the objective threshold.")
+# Convert the string into a function
+func = lambda x: eval(func_str)
+
+# Get the starting point from the user
+while True:
+    start_str = input("\nEnter the starting value to begin the search: ")
+    try:
+        start = float(start_str)
         break
+    except ValueError:
+        print("Invalid input. Please enter a number.")
 
-print("Initial Solution:", initial_solution)
-print("Best Solution:", current_solution)
-print("Objective Value:", current_value)
+maxima, max_value = hill_climbing(func, start)
+print(f"The maxima is at x = {maxima}")
+print(f"The maximum value obtained is {max_value}")
