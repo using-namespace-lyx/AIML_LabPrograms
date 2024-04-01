@@ -1,83 +1,103 @@
 def print_board(board):
     for row in board:
-        print(" ".join(row))
-    print()
+        print(" | ".join(row))
+        print("-" * 10)
 
 def is_winner(board, player):
-    row_win = any(all(board[i][j] == player for j in range(3)) for i in range(3))
-    col_win = any(all(board[j][i] == player for j in range(3)) for i in range(3))
-    diag1_win = all(board[i][i] == player for i in range(3))
-    diag2_win = all(board[i][2 - i] == player for i in range(3))
+    # Check rows
+    for row in board:
+        if all(cell == player for cell in row):
+            return True
 
-    return row_win or col_win or diag1_win or diag2_win
+    # Check columns
+    for col in range(3):
+        if all(board[row][col] == player for row in range(3)):
+            return True
 
-def is_draw(board):
-    return all(board[i][j] != ' ' for i in range(3) for j in range(3))
+    # Check diagonals
+    if all(board[i][i] == player for i in range(3)) or all(board[i][2 - i] == player for i in range(3)):
+        return True
 
-def dfs(board, maximizing_player):
-    if is_winner(board, 'O'):
-        return -1
+    return False
+
+def is_board_full(board):
+    return all(cell != ' ' for row in board for cell in row)
+
+def get_empty_cells(board):
+    return [(i, j) for i in range(3) for j in range(3) if board[i][j] == ' ']
+
+def minimax(board, depth, maximizing_player):
     if is_winner(board, 'X'):
+        return -1
+        
+    if is_winner(board, 'O'):
         return 1
-    if is_draw(board):
+    
+    if is_board_full(board):
         return 0
 
-    eval_func = max if maximizing_player else min
-    eval_value = float('-inf') if maximizing_player else float('inf')
+    if maximizing_player:
+        max_eval = float('-inf')
+        for i, j in get_empty_cells(board):
+            board[i][j] = 'O'
+            eval = minimax(board, depth + 1, False)
+            board[i][j] = ' '
+            max_eval = max(max_eval, eval)
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for i, j in get_empty_cells(board):
+            board[i][j] = 'X'
+            eval = minimax(board, depth + 1, True)
+            board[i][j] = ' '
+            min_eval = min(min_eval, eval)
+        return min_eval
 
-    for i in range(3):
-        for j in range(3):
-            if board[i][j] == ' ':
-                board[i][j] = 'X' if maximizing_player else 'O'
-                eval_value = eval_func(eval_value, dfs(board, not maximizing_player))
-                board[i][j] = ' '
-
-    return eval_value
-
-def find_best_move(board):
-    best_eval = float('-inf')
-    best_move = (-1, -1)
-
-    for i in range(3):
-        for j in range(3):
-            if board[i][j] == ' ':
-                board[i][j] = 'X'
-                eval = dfs(board, False)
-                board[i][j] = ' '
-
-                if eval > best_eval:
-                    best_eval, best_move = eval, (i, j)
-
+def get_best_move(board):
+    best_val = float('-inf')
+    best_move = None
+    for i, j in get_empty_cells(board):
+        board[i][j] = 'O'
+        move_val = minimax(board, 0, False)
+        board[i][j] = ' '
+        if move_val > best_val:
+            best_move = (i, j)
+            best_val = move_val
     return best_move
 
-# Main program
-board = [[' ' for _ in range(3)] for _ in range(3)]
+def play_tic_tac_toe():
+    board = [[' ' for _ in range(3)] for _ in range(3)]
+    player_turn = True  # True for 'X', False for 'O'
 
-print("Initial Board:")
-print_board(board)
+    while True:
+        print_board(board)
 
-while not is_winner(board, 'X') and not is_winner(board, 'O') and not is_draw(board):
-    x, y = find_best_move(board)
-    board[x][y] = 'X'
+        if player_turn:
+            row, col = map(int, input("Enter your move (row and column): ").split())
+            if board[row][col] == ' ':
+                board[row][col] = 'X'
+            else:
+                print("Invalid move. Try again.")
+                continue
+        else:
+            print("Computer's move:")
+            row, col = get_best_move(board)
+            board[row][col] = 'O'
 
-    print("Player X's move:")
-    print_board(board)
+        if is_winner(board, 'X'):
+            print_board(board)
+            print("You win!")
+            break
+        elif is_winner(board, 'O'):
+            print_board(board)
+            print("Computer wins!")
+            break
+        elif is_board_full(board):
+            print_board(board)
+            print("It's a tie!")
+            break
 
-    if is_winner(board, 'X') or is_draw(board):
-        break
+        player_turn = not player_turn
 
-    x, y = map(int, input("Enter your move (row and column, separated by space): ").split())
-    while board[x][y] != ' ':
-        print("Invalid move. Try again.")
-        x, y = map(int, input("Enter your move (row and column, separated by space): ").split())
-    board[x][y] = 'O'
-
-    print("Player O's move:")
-    print_board(board)
-
-if is_winner(board, 'X'):
-    print("Player X wins!")
-elif is_winner(board, 'O'):
-    print("Player O wins!")
-else:
-    print("It's a draw!")
+if __name__ == "__main__":
+    play_tic_tac_toe()
